@@ -27,6 +27,9 @@ public class ConfirmView extends View {
         ConfirmStateSuccess, ConfirmStateFail, ConfirmStateProgressing
     }
 
+    private int[] colors = {0xFF0099CC, 0xFF99CC00, 0xFFCC0099, 0xFFCC9900, 0xFF9900CC, 0xFF00CC99};
+    private int colorCursor = 0;
+
     private ConfirmState mCurrentConfirmState = ConfirmState.ConfirmStateSuccess;
 
     private static final long NORMAL_ANIMATION_DURATION = 350L;
@@ -183,6 +186,13 @@ public class ConfirmView extends View {
                     if(mCurrentConfirmState != ConfirmState.ConfirmStateProgressing){
                         mStartAngleAnimator.setDuration(NORMAL_ANIMATION_DURATION);
                     }
+
+                    colorCursor++;
+
+                    if(colorCursor >= colors.length) colorCursor = 0;
+
+                    mPaint.setColor(colors[colorCursor]);
+
 
                     mStartAngleAnimator.start();
                 }
