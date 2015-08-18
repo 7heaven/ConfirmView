@@ -6,11 +6,14 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 import android.graphics.RectF;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
+import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.ValueAnimator;
 
 import java.util.ArrayList;
@@ -26,7 +29,10 @@ public class ConfirmView extends View {
 
     private ConfirmState mCurrentConfirmState = ConfirmState.ConfirmStateSuccess;
 
-    private long NORMAL_ANIMATION_DURATION = 500L;
+    private static final long NORMAL_ANIMATION_DURATION = 500L;
+
+    private static final long NORMAL_ANGLE_ANIMATION_DURATION = 1000L;
+    private static final long NORMAL_CIRCLE_ANIMATION_DURATION = 2000L;
 
     private int mStrokeWidth;
     private Path mSuccessPath;
@@ -43,13 +49,17 @@ public class ConfirmView extends View {
     private int mRadius;
     private int mSignRadius;
 
-    private int mStartAngle;
-    private int mEndAngle;
+    private float mStartAngle;
+    private float mEndAngle;
+    private float mCircleAngle;
     private RectF oval;
 
     private float mPhare;
 
     private ValueAnimator mPhareAnimator;
+    private ValueAnimator mStartAngleAnimator;
+    private ValueAnimator mEndAngleAnimator;
+    private ValueAnimator mCircleAnimator;
 
     public ConfirmView(Context context){
         this(context, null);
@@ -92,6 +102,116 @@ public class ConfirmView extends View {
         mPhareAnimator.setInterpolator(new LinearInterpolator());
     }
 
+    private void initAngleAnimation(){
+        mStartAngleAnimator = ValueAnimator.ofFloat(0.0F, 1.0F);
+        mEndAngleAnimator = ValueAnimator.ofFloat(0.0F, 1.0F);
+        mCircleAnimator = ValueAnimator.ofFloat(0.0F, 1.0F);
+
+        mStartAngleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (Float) animation.getAnimatedValue();
+
+                setStartAngle(value);
+            }
+        });
+        mEndAngleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (Float) animation.getAnimatedValue();
+
+                setEndAngle(value);
+            }
+        });
+
+        mStartAngleAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                Log.e("ss", "dd");
+                if(mCurrentConfirmState == ConfirmState.ConfirmStateProgressing){
+                    if (mEndAngleAnimator != null) {
+
+                        Log.e("end", "restart");
+//                    mEndAngleAnimator.setStartDelay(400L);
+//                    mEndAngleAnimator.start();
+
+                        new Handler().postDelayed(new Runnable(){
+                            @Override
+                            public void run(){
+                                mEndAngleAnimator.start();
+                            }
+                        }, 400L);
+                    }
+                }
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if(mCurrentConfirmState != ConfirmState.ConfirmStateProgressing && mEndAngleAnimator != null && !mEndAngleAnimator.isRunning() && !mEndAngleAnimator.isStarted()){
+                    startPhareAnimation();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
+        mEndAngleAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                Log.e("state", ":" + mCurrentConfirmState);
+
+                if(mStartAngleAnimator != null){
+
+                    Log.e("restart", "startAngle");
+
+                    mStartAngleAnimator.start();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
+        mCircleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (Float) animation.getAnimatedValue();
+
+                setCircleAngle(value);
+            }
+        });
+
+        mStartAngleAnimator.setDuration(NORMAL_ANGLE_ANIMATION_DURATION);
+        mEndAngleAnimator.setDuration(NORMAL_ANGLE_ANIMATION_DURATION);
+        mStartAngleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        mEndAngleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        mCircleAnimator.setDuration(NORMAL_CIRCLE_ANIMATION_DURATION);
+        mCircleAnimator.setInterpolator(new LinearInterpolator());
+        mCircleAnimator.setRepeatCount(-1);
+    }
+
     public void startPhareAnimation(){
         if(mPhareAnimator == null){
             initPhareAnimation();
@@ -102,6 +222,16 @@ public class ConfirmView extends View {
         mPhareAnimator.setFloatValues(0.0F, 1.0F);
 
         mPhareAnimator.start();
+    }
+
+    public void startCircleAnimation(){
+        if(mCircleAnimator == null || mStartAngleAnimator == null || mEndAngleAnimator == null){
+            initAngleAnimation();
+        }
+
+        mStartAngleAnimator.start();
+        mEndAngleAnimator.start();
+        mCircleAnimator.start();
     }
 
     public void stopPhareAnimation(){
@@ -118,19 +248,72 @@ public class ConfirmView extends View {
         invalidate();
     }
 
+    public void setStartAngle(float startAngle){
+        this.mStartAngle = startAngle;
+
+        Log.e("startAngle", ":" + startAngle);
+
+        invalidate();
+    }
+
+    public void setEndAngle(float endAngle){
+        this.mEndAngle = endAngle;
+
+        Log.e("endAngle", ":" + endAngle);
+
+        invalidate();
+    }
+
+    public void setCircleAngle(float circleAngle){
+        this.mCircleAngle = circleAngle;
+
+        Log.e("circleAngle", ":" + circleAngle);
+
+        invalidate();
+    }
+
     public void setConfirmState(ConfirmState state){
         if(mCurrentConfirmState != state){
             mCurrentConfirmState = state;
+
             if(mPhareAnimator != null && mPhareAnimator.isRunning()){
                 mPhareAnimator.end();
             }
 
-            updatePath();
+            switch(state){
+                case ConfirmStateFail:
+                case ConfirmStateSuccess:
+                    updatePath();
+                    if(mCircleAnimator != null && mCircleAnimator.isRunning()){
+                        float tempCircleValue = (Float) mCircleAnimator.getAnimatedValue();
+
+                        mCircleAnimator.end();
+                        mCircleAngle = tempCircleValue;
+                    }
+                    break;
+                case ConfirmStateProgressing:
+                    mCircleAngle = 0;
+                    break;
+            }
+
         }
     }
 
     public void animatedConfirmState(ConfirmState state){
         setConfirmState(state);
+
+        switch(state){
+            case ConfirmStateProgressing:
+                startCircleAnimation();
+                break;
+            case ConfirmStateSuccess:
+            case ConfirmStateFail:
+                if((mStartAngleAnimator == null || !mStartAngleAnimator.isRunning() || !mStartAngleAnimator.isStarted()) &&
+                        (mEndAngleAnimator == null || !mEndAngleAnimator.isRunning() || !mEndAngleAnimator.isStarted())){
+                    startPhareAnimation();
+                }
+                break;
+        }
     }
 
     private void updatePhare(){
@@ -227,6 +410,13 @@ public class ConfirmView extends View {
         mRadius = mCenterX > mCenterY ? mCenterY : mCenterX;
         mSignRadius = (int) (mRadius * 0.55F);
 
+        int realRadius = mRadius - (mStrokeWidth / 2);
+
+        oval.left = mCenterX - realRadius;
+        oval.top = mCenterY - realRadius;
+        oval.right = mCenterX + realRadius;
+        oval.bottom = mCenterY + realRadius;
+
         updatePath();
     }
 
@@ -245,7 +435,22 @@ public class ConfirmView extends View {
                     }
                 }
             case ConfirmStateProgressing:
-                canvas.drawArc(oval, mStartAngle, mEndAngle - mStartAngle, false, mPaint);
+
+                float offsetAngle = mCircleAngle * 360;
+
+                float startAngle = mEndAngle * 360;
+
+                float sweepAngle = mStartAngle * 360;
+
+                if(startAngle == 360) startAngle = 0;
+
+                sweepAngle = sweepAngle - startAngle;
+
+                startAngle += offsetAngle;
+
+                if(sweepAngle < 0) sweepAngle = 1;
+
+                canvas.drawArc(oval, startAngle, sweepAngle, false, mPaint);
                 break;
         }
 

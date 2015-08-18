@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private ConfirmView confirmView;
     private EditText editText;
 
-    private ConfirmView.ConfirmState state = ConfirmView.ConfirmState.ConfirmStateFail;
+    private ConfirmView.ConfirmState state = ConfirmView.ConfirmState.ConfirmStateProgressing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,15 +35,21 @@ public class MainActivity extends AppCompatActivity {
                     case ConfirmStateSuccess:
                         state = ConfirmView.ConfirmState.ConfirmStateFail;
 
+                        break;
+                    case ConfirmStateProgressing:
+                        state = ConfirmView.ConfirmState.ConfirmStateSuccess;
+
                         Log.d("state", "success");
                         break;
                     case ConfirmStateFail:
-                        state = ConfirmView.ConfirmState.ConfirmStateSuccess;
+                        state = ConfirmView.ConfirmState.ConfirmStateProgressing;
                         break;
                 }
 
-                confirmView.setConfirmState(state);
-                confirmView.startPhareAnimation();
+//                confirmView.setConfirmState(state);
+//                confirmView.startPhareAnimation();
+
+                confirmView.animatedConfirmState(state);
             }
         });
 
@@ -70,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable(){
             @Override
             public void run(){
-                confirmView.startPhareAnimation();
+                confirmView.animatedConfirmState(state);
             }
         }, 1000L);
     }
