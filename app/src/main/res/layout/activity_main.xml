@@ -10,4 +10,11 @@
         android:layout_height="200dip"
         android:id="@+id/confirm_view" />
 
+    <EditText
+        android:id="@+id/edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/confirm_view"
+        android:text="Windows Mac OS X Linux"/>
+
 </RelativeLayout>

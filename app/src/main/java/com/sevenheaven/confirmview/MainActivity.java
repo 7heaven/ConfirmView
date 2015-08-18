@@ -3,14 +3,20 @@ package com.sevenheaven.confirmview;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputFilter;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.text.InputFilter;
 
 public class MainActivity extends AppCompatActivity {
 
     private ConfirmView confirmView;
+    private EditText editText;
 
     private ConfirmView.ConfirmState state = ConfirmView.ConfirmState.ConfirmStateFail;
 
@@ -25,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         confirmView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch(state){
+                switch (state) {
                     case ConfirmStateSuccess:
                         state = ConfirmView.ConfirmState.ConfirmStateFail;
 
@@ -39,6 +45,21 @@ public class MainActivity extends AppCompatActivity {
                 confirmView.setConfirmState(state);
                 confirmView.startPhareAnimation();
             }
+        });
+
+        editText = (EditText) findViewById(R.id.edit_text);
+        editText.setFilters(new InputFilter[]{
+                new InputFilter() {
+                    @Override
+                    public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+
+                        if(dstart >= 0 && dend <= 6){
+                            return source == null || source.length() == 0 ? dest.subSequence(dstart, dend) : "";
+                        }else{
+                            return null;
+                        }
+                    }
+                }
         });
     }
 

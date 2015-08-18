@@ -5,7 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
-import android.graphics.Point;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class ConfirmView extends View {
 
     public enum ConfirmState{
-        ConfirmStateSuccess, ConfirmStateFail
+        ConfirmStateSuccess, ConfirmStateFail, ConfirmStateProgressing
     }
 
     private ConfirmState mCurrentConfirmState = ConfirmState.ConfirmStateSuccess;
@@ -42,6 +42,10 @@ public class ConfirmView extends View {
 
     private int mRadius;
     private int mSignRadius;
+
+    private int mStartAngle;
+    private int mEndAngle;
+    private RectF oval;
 
     private float mPhare;
 
@@ -69,6 +73,8 @@ public class ConfirmView extends View {
         mPaint.setColor(0xFF0099CC);
         mPaint.setStrokeWidth(mStrokeWidth);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+
+        oval = new RectF();
     }
 
     private void initPhareAnimation(){
@@ -123,6 +129,10 @@ public class ConfirmView extends View {
         }
     }
 
+    public void animatedConfirmState(ConfirmState state){
+        setConfirmState(state);
+    }
+
     private void updatePhare(){
         if(mSuccessPath != null && renderPathsSize > 0){
 
@@ -174,18 +184,13 @@ public class ConfirmView extends View {
             case ConfirmStateFail:
                 mSuccessPath.reset();
 
-                Point center = new Point(mCenterX, mCenterY);
+                float failRadius = mSignRadius * 0.8F;
 
-                double slice = Math.PI / 4;
+                mSuccessPath.moveTo(mCenterX - failRadius, mCenterY - failRadius);
+                mSuccessPath.lineTo(mCenterX + failRadius, mCenterY + failRadius);
 
-                Point tempP = centerRadiusPoint(center, slice * 5, mSignRadius);
-                mSuccessPath.moveTo(tempP.x, tempP.y);
-                tempP = centerRadiusPoint(center, slice, mSignRadius);
-                mSuccessPath.lineTo(tempP.x, tempP.y);
-                tempP = centerRadiusPoint(center, -slice, mSignRadius);
-                mSuccessPath.moveTo(tempP.x, tempP.y);
-                tempP = centerRadiusPoint(center, slice * 3, mSignRadius);
-                mSuccessPath.lineTo(tempP.x, tempP.y);
+                mSuccessPath.moveTo(mCenterX + failRadius, mCenterY - failRadius);
+                mSuccessPath.lineTo(mCenterX - failRadius, mCenterY + failRadius);
 
                 renderPathsSize = 2;
 
@@ -220,31 +225,28 @@ public class ConfirmView extends View {
         mCenterY = h / 2;
 
         mRadius = mCenterX > mCenterY ? mCenterY : mCenterX;
-        mSignRadius = (int) (mRadius * 0.6F);
+        mSignRadius = (int) (mRadius * 0.55F);
 
         updatePath();
-    }
-
-    protected Point centerRadiusPoint(Point center, double angle, double radius) {
-        Point p = new Point();
-        p.x = (int) (radius * Math.cos(angle)) + center.x;
-        p.y = (int) (radius * Math.sin(angle)) + center.y;
-
-        return p;
     }
 
     @Override
     public void onDraw(Canvas canvas){
         super.onDraw(canvas);
 
-        canvas.drawCircle(mCenterX, mCenterY, mRadius - (mStrokeWidth / 2), mPaint);
+        switch(mCurrentConfirmState){
+            case ConfirmStateFail:
+            case ConfirmStateSuccess:
+                for(int i = 0; i < renderPathsSize; i++){
+                    Path p = mRenderPaths.get(i);
 
-        for(int i = 0; i < renderPathsSize; i++){
-            Path p = mRenderPaths.get(i);
-
-            if(p != null){
-                canvas.drawPath(p, mPaint);
-            }
+                    if(p != null){
+                        canvas.drawPath(p, mPaint);
+                    }
+                }
+            case ConfirmStateProgressing:
+                canvas.drawArc(oval, mStartAngle, mEndAngle - mStartAngle, false, mPaint);
+                break;
         }
 
     }
