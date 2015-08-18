@@ -29,7 +29,8 @@ public class ConfirmView extends View {
 
     private ConfirmState mCurrentConfirmState = ConfirmState.ConfirmStateSuccess;
 
-    private static final long NORMAL_ANIMATION_DURATION = 500L;
+    private static final long NORMAL_ANIMATION_DURATION = 350L;
+    private static final long ENDING_ANGLE_ANIMATION_DURATION = 500L;
 
     private static final long NORMAL_ANGLE_ANIMATION_DURATION = 1000L;
     private static final long NORMAL_CIRCLE_ANIMATION_DURATION = 2000L;
@@ -150,6 +151,7 @@ public class ConfirmView extends View {
             public void onAnimationEnd(Animator animation) {
                 if(mCurrentConfirmState != ConfirmState.ConfirmStateProgressing && mEndAngleAnimator != null && !mEndAngleAnimator.isRunning() && !mEndAngleAnimator.isStarted()){
                     startPhareAnimation();
+                    mStartAngleAnimator.setDuration(ENDING_ANGLE_ANIMATION_DURATION);
                 }
             }
 
@@ -177,6 +179,10 @@ public class ConfirmView extends View {
                 if(mStartAngleAnimator != null){
 
                     Log.e("restart", "startAngle");
+
+                    if(mCurrentConfirmState != ConfirmState.ConfirmStateProgressing){
+                        mStartAngleAnimator.setDuration(NORMAL_ANIMATION_DURATION);
+                    }
 
                     mStartAngleAnimator.start();
                 }
@@ -228,6 +234,8 @@ public class ConfirmView extends View {
         if(mCircleAnimator == null || mStartAngleAnimator == null || mEndAngleAnimator == null){
             initAngleAnimation();
         }
+
+        mStartAngleAnimator.setDuration(NORMAL_ANGLE_ANIMATION_DURATION);
 
         mStartAngleAnimator.start();
         mEndAngleAnimator.start();
@@ -310,6 +318,8 @@ public class ConfirmView extends View {
             case ConfirmStateFail:
                 if((mStartAngleAnimator == null || !mStartAngleAnimator.isRunning() || !mStartAngleAnimator.isStarted()) &&
                         (mEndAngleAnimator == null || !mEndAngleAnimator.isRunning() || !mEndAngleAnimator.isStarted())){
+                    mStartAngle = 360;
+                    mEndAngle = 0;
                     startPhareAnimation();
                 }
                 break;
