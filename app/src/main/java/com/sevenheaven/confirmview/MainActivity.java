@@ -3,6 +3,7 @@ package com.sevenheaven.confirmview;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         editText = (EditText) findViewById(R.id.edit_text);
+        editText.setText(Html.fromHtml("<font color='#0099CC'>wwww</font> <font size='50'>aaa</font>"));
         editText.setFilters(new InputFilter[]{
                 new InputFilter() {
                     @Override

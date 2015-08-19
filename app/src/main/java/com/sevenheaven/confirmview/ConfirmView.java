@@ -45,6 +45,14 @@ public class ConfirmView extends View {
     private int renderPathsSize;
     private Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+    public interface ConfirmViewListener{
+        public void onConfirmStateChanged(ConfirmState state);
+        public void onConfirmAnimationEnd(ConfirmState state);
+    }
+
+    private ConfirmViewListener mConfirmViewListener;
+
+
     private int mWidth;
     private int mHeight;
     private int mCenterX;
@@ -81,7 +89,7 @@ public class ConfirmView extends View {
 
         mRenderPaths = new ArrayList<Path>();
 
-        mStrokeWidth = 20;
+        mStrokeWidth = 50;
 
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setColor(0xFF0099CC);
@@ -99,6 +107,30 @@ public class ConfirmView extends View {
                 float value = (Float) animation.getAnimatedValue();
 
                 setPhare(value);
+            }
+        });
+
+        mPhareAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if(mConfirmViewListener != null){
+                    mConfirmViewListener.onConfirmAnimationEnd(mCurrentConfirmState);
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
             }
         });
 
@@ -131,13 +163,8 @@ public class ConfirmView extends View {
         mStartAngleAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-                Log.e("ss", "dd");
                 if(mCurrentConfirmState == ConfirmState.ConfirmStateProgressing){
                     if (mEndAngleAnimator != null) {
-
-                        Log.e("end", "restart");
-//                    mEndAngleAnimator.setStartDelay(400L);
-//                    mEndAngleAnimator.start();
 
                         new Handler().postDelayed(new Runnable(){
                             @Override
@@ -177,11 +204,8 @@ public class ConfirmView extends View {
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                Log.e("state", ":" + mCurrentConfirmState);
 
                 if(mStartAngleAnimator != null){
-
-                    Log.e("restart", "startAngle");
 
                     if(mCurrentConfirmState != ConfirmState.ConfirmStateProgressing){
                         mStartAngleAnimator.setDuration(NORMAL_ANIMATION_DURATION);
@@ -277,15 +301,11 @@ public class ConfirmView extends View {
     public void setEndAngle(float endAngle){
         this.mEndAngle = endAngle;
 
-        Log.e("endAngle", ":" + endAngle);
-
         invalidate();
     }
 
     public void setCircleAngle(float circleAngle){
         this.mCircleAngle = circleAngle;
-
-        Log.e("circleAngle", ":" + circleAngle);
 
         invalidate();
     }
@@ -293,6 +313,10 @@ public class ConfirmView extends View {
     public void setConfirmState(ConfirmState state){
         if(mCurrentConfirmState != state){
             mCurrentConfirmState = state;
+
+            if(mConfirmViewListener != null){
+                mConfirmViewListener.onConfirmStateChanged(mCurrentConfirmState);
+            }
 
             if(mPhareAnimator != null && mPhareAnimator.isRunning()){
                 mPhareAnimator.end();
